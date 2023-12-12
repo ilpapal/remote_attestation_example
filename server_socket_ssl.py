@@ -43,10 +43,10 @@ try:
     secure_client_socket.sendall(response.encode('utf-8'))
 
     # Close the connection
-    secure_client_socket.close()
+    # secure_client_socket.close()
 
 except Exception as e:
     print(e)
 
-finally:
-    server_socket.close()
+# finally:
+#     server_socket.close()
