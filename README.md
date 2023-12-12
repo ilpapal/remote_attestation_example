@@ -4,6 +4,6 @@ Remote Attestation Example written in Python. Establishes connection between a S
 
 Useful for killing the Python process:
 
-'''
+```
 kill -9 $(ps -A | grep python | awk '{print $1}')
-'''
+```

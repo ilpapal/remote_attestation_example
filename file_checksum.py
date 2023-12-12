@@ -18,5 +18,5 @@ def calculate_sha256_checksum(file_path):
     return sha256.hexdigest()
 
 # Print the SHA-256 checksum
-checksum = calculate_sha256_checksum(input_file)
-print("SHA256 Checksum : {}".format(checksum))
+# checksum = calculate_sha256_checksum(input_file)
+# print("SHA256 Checksum : {}".format(checksum))
