@@ -6,12 +6,12 @@ import ssl
 
 # Server configurations
 # HOST = '127.0.0.1'
-HOST = '127.0.0.1'
+HOST = '147.102.37.120'
 PORT = 443
-CERT_FILE = 'ssl_includes/client.crt'
-KEY_FILE = 'ssl_includes/client.key'
-# CERT_FILE = 'ssl_includes/kakos.crt'
-# KEY_FILE = 'ssl_includes/kakos.key'
+#CERT_FILE = 'ssl_includes/client.crt'
+#KEY_FILE = 'ssl_includes/client.key'
+CERT_FILE = 'ssl_includes/kakos.crt'
+KEY_FILE = 'ssl_includes/kakos.key'
 
 # Default Messages
 ATTESTATION_RQST = 'bootup_attestation'
