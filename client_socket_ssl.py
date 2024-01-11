@@ -53,4 +53,4 @@ data_received_utf8 = data_received.decode('utf-8')
 print("Checksum Received : {}".format(data_received_utf8))
 
 # Close the connection
-# secure_client_socket.close()
+secure_client_socket.close()
