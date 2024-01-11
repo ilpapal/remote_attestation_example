@@ -8,10 +8,10 @@ import ssl
 # HOST = '127.0.0.1'
 HOST = '147.102.37.120'
 PORT = 443
-#CERT_FILE = 'ssl_includes/client.crt'
-#KEY_FILE = 'ssl_includes/client.key'
-CERT_FILE = 'ssl_includes/kakos.crt'
-KEY_FILE = 'ssl_includes/kakos.key'
+CERT_FILE = 'ssl_includes/client.crt'
+KEY_FILE = 'ssl_includes/client.key'
+# CERT_FILE = 'ssl_includes/kakos.crt'
+# KEY_FILE = 'ssl_includes/kakos.key'
 
 # Default Messages
 ATTESTATION_RQST = 'bootup_attestation'
@@ -21,7 +21,13 @@ ATTESTATION_RQST = 'bootup_attestation'
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 # Connect to the server
-client_socket.connect((HOST, PORT))
+try:
+    client_socket.connect((HOST, PORT))
+
+# Print an error if the connection was unsuccessful
+except Exception as e:
+    print("[Client] Connection error: {}".format(e))
+    
 
 print("--------------------------------------------------------")
 print("Client Connected to {} [Port: {}]".format(HOST, PORT))
