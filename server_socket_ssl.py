@@ -65,7 +65,7 @@ try:
         checksum = calculate_sha256_checksum(FPGA_BITSTREAM_FILE)
 
         # Get key result from FPGA
-        puf = "this_is_puf"
+        puf = "pufdummyresult123"
 
         # Send to the client the calculated bitstream
         secure_client_socket.sendall(checksum.encode('utf-8'))
