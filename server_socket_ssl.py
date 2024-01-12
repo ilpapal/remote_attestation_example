@@ -8,6 +8,8 @@ from file_checksum import calculate_sha256_checksum
 # Server configurations
 HOST = '127.0.0.1'
 PORT = 443
+
+# Input file locations
 CERT_FILE = 'ssl_includes/server.crt'
 KEY_FILE = 'ssl_includes/server.key'
 
@@ -35,7 +37,7 @@ try:
     server_socket.listen()
 
     print("--------------------------------------------------------")
-    print("Edge Accelerator Bootup Attestation Server ")
+    print("Remote Attestation Server ")
     print("Server listening on {} [Port: {}]".format(HOST, PORT))
     print("--------------------------------------------------------")
 
