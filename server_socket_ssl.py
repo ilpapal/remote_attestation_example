@@ -6,7 +6,6 @@
 # ---------------------------------------------------
 import socket
 import ssl
-from file_checksum import calculate_sha256_checksum
 
 # Server configurations (PORT > 1024 doesn't require sudo access)
 HOST = "147.102.37.120"
@@ -25,7 +24,7 @@ xlcbin_cert = "bitstream/xclbin_cert.crt"
 att_request = "attestation_rqst"
 
 # Reference values for verification
-vrf_checksum = "e6c2022a87a5f67f12289b2c699fba03cfb849c3eed83d820ac858f950648428"
+vrf_checksum = "1ce65761516fad64f7acd86a1309aae1bc274bdfa87a26a762eb673d9e811c7a"
 vrf_signature = "f8e2a7b1d6934c0f9dc5450e76a91b6e5e257db4c52e9f062d2464937d3a1c99"
 
 # Create a socket
