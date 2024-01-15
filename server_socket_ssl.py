@@ -1,23 +1,32 @@
 # ---------------------------------------------------
 # Example for Server w/ socket SSL communication 
 # ---------------------------------------------------
+# Creator   : Ilias Papalamprou
+# Date      : 12/2023
+# ---------------------------------------------------
 import socket
 import ssl
 from file_checksum import calculate_sha256_checksum
 
-# Server configurations
-HOST = '127.0.0.1'
-PORT = 443
+# Server configurations (PORT > 1024 doesn't require sudo access)
+HOST = "147.102.37.120"
+PORT = 6666
 
-# Input file locations
-CERT_FILE = 'ssl_includes/server.crt'
-KEY_FILE = 'ssl_includes/server.key'
+# Server Client secure connection files
+cert_file = "ssl_includes/server.crt"
+key_file = "ssl_includes/server.key"
+
+# Files required for attestation
+xclbin_file = "bitstream/bitstream.bin"
+xclbin_key = "example_key_1"
+xlcbin_cert = "bitstream/xclbin_cert.crt"
 
 # Default Messages
-ATTESTATION_RQST = 'bootup_attestation'
+att_request = "attestation_rqst"
 
-# FPGA Bitstream Location
-FPGA_BITSTREAM_FILE = 'lstm_app'
+# Reference values for verification
+vrf_checksum = "e6c2022a87a5f67f12289b2c699fba03cfb849c3eed83d820ac858f950648428"
+vrf_signature = "f8e2a7b1d6934c0f9dc5450e76a91b6e5e257db4c52e9f062d2464937d3a1c99"
 
 # Create a socket
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -37,7 +46,7 @@ try:
     server_socket.listen()
 
     print("--------------------------------------------------------")
-    print("Remote Attestation Server ")
+    print("Remote Attestation Server")
     print("Server listening on {} [Port: {}]".format(HOST, PORT))
     print("--------------------------------------------------------")
 
@@ -46,7 +55,7 @@ try:
 
     # Wrap the socket with SSL/TLS
     ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-    ssl_context.load_cert_chain(certfile=CERT_FILE, keyfile=KEY_FILE)
+    ssl_context.load_cert_chain(certfile=cert_file, keyfile=key_file)
 
     secure_client_socket = ssl_context.wrap_socket(
         client_socket, 
@@ -54,35 +63,42 @@ try:
         do_handshake_on_connect=True,
     )
 
+    # Send remote attestation request after successful connection
+    print("Sending Remote Attestation request...")
+    secure_client_socket.sendall(att_request.encode('utf-8'))
+
     # Receive and print the message from the client
-    data_received = secure_client_socket.recv(1024)
+    data_received = secure_client_socket.recv(128)
     data_received_utf8 = data_received.decode('utf-8')
-    print("Received from client: {}".format(data_received_utf8))
 
-    # Check if we received request for Attestation
-    if data_received_utf8 == ATTESTATION_RQST:
-        print("Attestation Request from client!")
+    # Extract the different variables from the attestation report
+    parsed_received = {}
 
-        # Calculate FPGA Bitstream Checksum
-        checksum = calculate_sha256_checksum(FPGA_BITSTREAM_FILE)
+    parsed_received['checksum'] = data_received_utf8[0:64]
+    parsed_received['certificate'] = data_received_utf8[64:128]
 
-        # Get key result from FPGA
-        puf = "pufdummyresult123"
+    # Print received attestation report
+    print("Received attestation report")
+    print("Checksum : {}".format(parsed_received['checksum']))
+    print("Certificate : {}".format(parsed_received['certificate']))
 
-        # Send to the client the calculated bitstream
-        secure_client_socket.sendall(checksum.encode('utf-8'))
+    # Check if we received the correct values
+    if (parsed_received['checksum'] != vrf_checksum) or (parsed_received['certificate'] != vrf_signature):
+        print("A bad guy tries to upload his code :(")
+
+        # Send message that the attestation failed
+        att_status = "fail"
+        secure_client_socket.sendall(att_status.encode('utf-8'))
 
     else:
-        print("Wrong request!")
+        print("Designer einai filos mou :)")
 
-    # Close the connection
-    # secure_client_socket.close()
-
-# except Exception as e:
-#     print(e)
+        # Send message that the attestation completed successfuly
+        att_status = "pass"
+        secure_client_socket.sendall(att_status.encode('utf-8'))        
 
 except KeyboardInterrupt:
     print("Server terminated by user.")
 
-finally:
-    server_socket.close()
+# finally:
+#     server_socket.close()
