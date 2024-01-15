@@ -16,14 +16,14 @@ def calculate_sha256_checksum(file_path):
     return sha256.hexdigest()
 
 # File to calculate checksum for
-input_file_1 = "bitstream/bitstream_lstm_1.bit"
-input_file_2 = "bitstream/bitstream_lstm_2.bit"
+# input_file_1 = "bitstream/bitstream_lstm_1.bit"
+# input_file_2 = "bitstream/bitstream_lstm_2.bit"
 
 # Print the SHA-256 checksum
-checksum_1 = calculate_sha256_checksum(input_file_1)
-print("Filename [{}]".format(input_file_1))
-print("SHA256 Checksum : {}".format(checksum_1))
+# checksum_1 = calculate_sha256_checksum(input_file_1)
+# print("Filename [{}]".format(input_file_1))
+# print("SHA256 Checksum : {}".format(checksum_1))
 
-checksum_2 = calculate_sha256_checksum(input_file_2)
-print("Filename [{}]".format(input_file_2))
-print("SHA256 Checksum : {}".format(checksum_2))
+# checksum_2 = calculate_sha256_checksum(input_file_2)
+# print("Filename [{}]".format(input_file_2))
+# print("SHA256 Checksum : {}".format(checksum_2))

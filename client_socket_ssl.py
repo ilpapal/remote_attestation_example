@@ -7,6 +7,7 @@
 import socket
 import ssl
 import subprocess
+from file_checksum import calculate_sha256_checksum
 
 # Server configurations
 HOST = '147.102.37.120'
@@ -19,21 +20,59 @@ key_file = 'ssl_includes/client.key'
 # Default Messages
 att_request = "attestation_rqst"
 
-# Bitstream files
-xclbin_file = "bitstream/lstm.xclbin"
+# Acceleartion files
+exec_file = "app_files/hello_world"
+xclbin_file = "app_files/vadd.xclbin"
+
+
+# Auxiliary functions to extract command output data
+def extract_line_before_exit(output):
+    lines = output.split('\n')
+    for i, line in enumerate(lines):
+        if "Exiting" in line:
+            # Return the line before the "Exiting" line
+            return lines[i - 1] if i > 0 else None
+    return None
+
+def extract_first_element(line):
+    # Split the line by space and return the first element
+    elements = line.split()
+    return elements[0] if elements else None
+
+
 
 # Calculate values required for remote attestation
 def remote_attestation(input_file):
-    # Calculate file checksum
-    file_checksum = "e6c2022a87a5f67f12289b2c699fba03cfb849c3eed83d820ac858f950648428"
+    # Extract bitstream from the xclbin application into a seperate file
+    subprocess.run(["xclbinutil", "--force", "--dump-section", "BITSTREAM:RAW:app_files/bitstream_extract.bit", "--input", input_file])
+
+    # Calculate bitstream checksum
+    file_checksum = calculate_sha256_checksum("app_files/bitstream_extract.bit")
 
     # Extract file signature
-    file_signature = "f8e2a7b1d6934c0f9dc5450e76a91b6e5e257db4c52e9f062d2464937d3a1c99"
+    # file_signature = "f8e2a7b1d6934c0f9dc5450e76a91b6e5e257db4c52e9f062d2464937d3a1c99"
+    get_signature_command = ["xclbinutil", "--input", "app_files/vadd_signed.xclbin", "--get-signature"]
+    # execCmd("signature_test", get_signature_command)
+
+    proc = subprocess.Popen(get_signature_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    output, _ = proc.communicate()
+
+    output_str = output.decode('ascii')
+
+    # Extract the signature from the command output
+    line_before_exit = extract_line_before_exit(output_str)
+
+    if line_before_exit != None:
+        file_signature = extract_first_element(line_before_exit)
+        print("File Signature : {}".format(file_signature))
+    else:
+        print("[Error] Unable to get file signature")
 
     # Generate attestation report
     attestation_report = file_checksum + file_signature
 
     return attestation_report
+
 
 # Main program function
 def main():
@@ -95,7 +134,7 @@ def main():
             print("Einai filos mou. Loading the application to the accelerator...")
             
             # Load the .xclbin application to the FPGA
-            subprocess.run(["xclbinutil", "--help"])
+            # subprocess.run(["xclbinutil", "--help"])
     else:
         print("[Error] - Received: {}".format(data_received_utf8))
 
