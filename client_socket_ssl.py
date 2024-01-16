@@ -8,6 +8,8 @@ import socket
 import ssl
 import subprocess
 from file_checksum import calculate_sha256_checksum
+from colorama import Fore, init
+
 
 # Server configurations
 HOST = '147.102.37.120'
@@ -22,57 +24,68 @@ att_request = "attestation_rqst"
 
 # Acceleartion files
 exec_file = "app_files/hello_world"
-xclbin_file = "app_files/vadd.xclbin"
+xclbin_file = "app_files/vadd_enc_signed.xclbin"
+# xclbin_file = "app_files/vadd.xclbin"
+bitstr_raw_file = "app_files/bitstream_raw_enc.bit"
+xclbin_output_file = "app_files/output.xclbin"
 
+
+# For reseting terminal text color
+init(autoreset=True)
 
 # Auxiliary functions to extract command output data
-def extract_line_before_exit(output):
-    lines = output.split('\n')
-    for i, line in enumerate(lines):
-        if "Exiting" in line:
-            # Return the line before the "Exiting" line
-            return lines[i - 1] if i > 0 else None
-    return None
-
 def extract_first_element(line):
     # Split the line by space and return the first element
     elements = line.split()
     return elements[0] if elements else None
 
 
-
 # Calculate values required for remote attestation
-def remote_attestation(input_file):
+def remote_attestation(nonce, input_file):
     # Extract bitstream from the xclbin application into a seperate file
-    subprocess.run(["xclbinutil", "--force", "--dump-section", "BITSTREAM:RAW:app_files/bitstream_extract.bit", "--input", input_file])
+    bitstr_section = "BITSTREAM:RAW:" + bitstr_raw_file
+    subprocess.run(["xclbinutil", "--force", "--dump-section", bitstr_section, "--input", input_file])
 
     # Calculate bitstream checksum
-    file_checksum = calculate_sha256_checksum("app_files/bitstream_extract.bit")
+    file_checksum = calculate_sha256_checksum(bitstr_raw_file)
 
     # Extract file signature
-    # file_signature = "f8e2a7b1d6934c0f9dc5450e76a91b6e5e257db4c52e9f062d2464937d3a1c99"
-    get_signature_command = ["xclbinutil", "--input", "app_files/vadd_signed.xclbin", "--get-signature"]
-    # execCmd("signature_test", get_signature_command)
+    get_signature_command = ["xclbinutil", "--input", xclbin_file, "--get-signature", "--quiet"]
 
     proc = subprocess.Popen(get_signature_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     output, _ = proc.communicate()
-
     output_str = output.decode('ascii')
 
     # Extract the signature from the command output
-    line_before_exit = extract_line_before_exit(output_str)
-
-    if line_before_exit != None:
-        file_signature = extract_first_element(line_before_exit)
+    if output_str != "":
+        file_signature = extract_first_element(output_str)
         print("File Signature : {}".format(file_signature))
     else:
+        file_signature = ""
         print("[Error] Unable to get file signature")
 
-    # Generate attestation report
-    attestation_report = file_checksum + file_signature
+    # Generate attestation report including the received nonce
+    attestation_report = nonce + file_checksum + file_signature
 
     return attestation_report
 
+
+# Bitstream decryption function
+def bitstream_decryption(input_file, bitstr_key):
+    # Decrypt the bitstream file using OpenSSL and AES algorithm, with the received key after a successful attestation
+    print("Decrypting bitstream...")
+    bitstr_dec_raw = "app_files/bitstream_raw_dec.bit"
+    subprocess.run(["openssl", "enc", "-d", "-aes-256-cbc", "-in", input_file, "-out", bitstr_dec_raw, "-k", bitstr_key, "-pbkdf2"])
+
+    # Load the decrypted bitstream back to the xclbin file 
+    print("Building the xclbin file")
+    bitstr_section = "BITSTREAM:RAW:" + bitstr_dec_raw
+    subprocess.run(["xclbinutil", "--force", "--input", xclbin_file, "--replace-section", bitstr_section, "--output", xclbin_output_file])
+
+    # Remove the raw bitstream files
+    print("Cleaning files...")
+    subprocess.run(["rm", bitstr_dec_raw])
+    subprocess.run(["rm", bitstr_raw_file])
 
 # Main program function
 def main():
@@ -87,9 +100,9 @@ def main():
     except Exception as e:
         print("[Client] Connection error: {}".format(e))
 
-    print("--------------------------------------------------------")
+    print("#################################################################")
     print("Edge Accelerator connected to {} [Port: {}]".format(HOST, PORT))
-    print("--------------------------------------------------------")
+    print("#################################################################")
 
     # Wrap the socket with SSL/TLS
     ssl_context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
@@ -108,33 +121,53 @@ def main():
     data_received = secure_client_socket.recv(1024)
     data_received_utf8 = data_received.decode('utf-8')
 
-    # Perform remote attestation procedure if the correct request is received
-    if data_received_utf8 == att_request:
+    # Perform remote attestation procedure if the correct request is received [att_rsqt + nonce]
+    if data_received_utf8[0:16] == att_request:
         print("Initalizing Remote Attestation Protocol... [Received: {}]".format(data_received_utf8))
 
+        # Get the nonce value
+        nonce = data_received_utf8[16:32]
+
         # Remote attestation function
-        attestation_report = remote_attestation(xclbin_file)
+        attestation_report = remote_attestation(nonce, xclbin_file)
 
         # Send attestation report to the verification server
+        print("#################################################################")
         print("Sending Attestation report to the Verification Server...")
         print(attestation_report)
 
         secure_client_socket.sendall(attestation_report.encode('utf-8'))
 
+        print("#################################################################")
         print("Waiting for response...")
 
         data_received = secure_client_socket.recv(1024)
         data_received_utf8 = data_received.decode('utf-8')
 
         if data_received_utf8 == "fail":
-            print("A bad guy tries to program the Accelerator x_x")
+            print(f"{Fore.RED}\u2718 Failed Attestation")
             secure_client_socket.close()
 
         elif data_received_utf8 == "pass":
-            print("Einai filos mou. Loading the application to the accelerator...")
+            print(f"{Fore.GREEN}\u2713 Successful Attestation") 
+
+            # Request the bitstream decryption key
+            print("#################################################################")
+            print("Getting bitstream decryption key from the server...")
+            bitstr_key_rqst = "bitstr_key"
+            secure_client_socket.sendall(bitstr_key_rqst.encode('utf-8'))
+            data_received = secure_client_socket.recv(1024)
+            bitstr_decryption_key = data_received.decode('utf-8')
+
+            # Decrypt the bitstream and build the xclbin file
+            print("#################################################################")
+            bitstream_decryption(bitstr_raw_file, bitstr_decryption_key)
             
             # Load the .xclbin application to the FPGA
+            print("#################################################################")
+            # print("Loading the application to the accelerator...")            
             # subprocess.run(["xclbinutil", "--help"])
+
     else:
         print("[Error] - Received: {}".format(data_received_utf8))
 

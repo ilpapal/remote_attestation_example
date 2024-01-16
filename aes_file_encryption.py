@@ -40,8 +40,8 @@ def decrypt_file(key, input_file_path, output_file_path):
             chunk = f_in.read(chunk_size)
 
 # Example usage:
-#key = b'ff'  # Replace with your 16, 24, or 32-byte key
-key = '00112233445566778899aabbccddeeff'
+key = b'ffffffff'  # Replace with your 16, 24, or 32-byte key
+# key = '00112233445566778899aabbccddeeff'
 input_file_path = 'test_files/example_1.txt'
 encrypted_file_path = 'test_files/example_1.txt.enc'
 decrypted_file_path = 'test_files/example_decrypted.txt'
