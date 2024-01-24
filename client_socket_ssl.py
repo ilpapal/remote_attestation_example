@@ -8,9 +8,11 @@ import socket
 import ssl
 import subprocess
 from file_checksum import calculate_sha256_checksum
-from ecdh import DiffieHellman, get_key_hex
+from ecdh import DiffieHellman, get_key_hex, get_key_object
 from colorama import Fore, init
 
+# Define if we want executed commands to show output
+DEBUG = False
 
 # Server configurations
 HOST = '147.102.37.120'
@@ -45,7 +47,8 @@ def extract_first_element(line):
 def remote_attestation(nonce, input_file):
     # Extract bitstream from the xclbin application into a seperate file
     bitstr_section = "BITSTREAM:RAW:" + bitstr_raw_file
-    subprocess.run(["xclbinutil", "--force", "--dump-section", bitstr_section, "--input", input_file])
+    cmd_log = subprocess.run(["xclbinutil", "--force", "--dump-section", bitstr_section, "--input", input_file], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if DEBUG : print(cmd_log.stdout.decode('utf-8'))
 
     # Calculate bitstream checksum
     file_checksum = calculate_sha256_checksum(bitstr_raw_file)
@@ -76,12 +79,18 @@ def bitstream_decryption(input_file, bitstr_key):
     # Decrypt the bitstream file using OpenSSL and AES algorithm, with the received key after a successful attestation
     print("Decrypting bitstream...")
     bitstr_dec_raw = "app_files/bitstream_raw_dec.bit"
-    subprocess.run(["openssl", "enc", "-d", "-aes-256-cbc", "-in", input_file, "-out", bitstr_dec_raw, "-k", bitstr_key, "-pbkdf2"])
+    try:
+        cmd_log = subprocess.run(["openssl", "enc", "-d", "-aes-256-cbc", "-in", input_file, "-out", bitstr_dec_raw, "-k", bitstr_key, "-pbkdf2"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if DEBUG : print(cmd_log.stdout.decode('utf-8'))
+    except subprocess.CalledProcessError as e:
+        print("OPENSSL Decryption Error")
+        print(e.stderr.decode('utf-8'))
 
     # Load the decrypted bitstream back to the xclbin file 
-    print("Building the xclbin file")
+    print("Building the .xclbin file...")
     bitstr_section = "BITSTREAM:RAW:" + bitstr_dec_raw
-    subprocess.run(["xclbinutil", "--force", "--input", xclbin_file, "--replace-section", bitstr_section, "--output", xclbin_output_file])
+    cmd_log = subprocess.run(["xclbinutil", "--force", "--input", xclbin_file, "--replace-section", bitstr_section, "--output", xclbin_output_file], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if DEBUG : print(cmd_log.stdout.decode('utf-8'))
 
     # Remove the raw bitstream files
     print("Cleaning files...")
@@ -124,10 +133,11 @@ def main():
 
     # Perform remote attestation procedure if the correct request is received [att_rsqt + nonce]
     if data_received_utf8[0:16] == att_request:
-        print("Initalizing Remote Attestation Protocol... [Received: {}]".format(data_received_utf8))
+        print("Initalizing Remote Attestation Protocol...")
 
         # Get the nonce value
         nonce = data_received_utf8[16:32]
+        print("Received Nonce:", nonce)
 
         # Remote attestation function
         attestation_report = remote_attestation(nonce, xclbin_file)
@@ -154,7 +164,7 @@ def main():
 
             # Request the bitstream decryption key
             print("#################################################################")
-            print("Getting bitstream decryption key from the server...")
+            print("Getting bitstream decryption key from the server using ECHD...")
             bitstr_key_rqst = "bitstr_key"
             secure_client_socket.sendall(bitstr_key_rqst.encode('utf-8'))
 
@@ -164,20 +174,17 @@ def main():
             # Exchange public keys with the client
             public_key_received = secure_client_socket.recv(1024)
             public_key_received_utf8 = public_key_received.decode('utf-8')
+            public_key_received_bytes = bytes.fromhex(public_key_received_utf8)
+            public_key_received_object = get_key_object(public_key_received_bytes)
             public_key_hex = get_key_hex(client_ecdh.public_key)
             secure_client_socket.sendall(public_key_hex.encode('utf-8'))
-
-            print("==========")
-            print(public_key_hex)
-            print("==========")
-            print(public_key_received_utf8)
-            print("==========")
 
             # Complete the key exchange
             data_received = secure_client_socket.recv(1024)
             data_received_utf8 = data_received.decode('utf-8')
             data_received_bytes = bytes.fromhex(data_received_utf8)
-            bitstr_decryption_key = client_ecdh.decrypt(server_ecdh_pub_key, data_received_bytes, client_ecdh.IV)
+            bitstr_decryption_key = client_ecdh.decrypt(public_key_received_object, data_received_bytes, client_ecdh.IV)
+            print("Key Derivation Completed")
 
             # Decrypt the bitstream and build the xclbin file
             print("#################################################################")
