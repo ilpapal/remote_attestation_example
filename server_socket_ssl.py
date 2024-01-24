@@ -7,7 +7,7 @@
 import socket
 import ssl
 import Crypto.Random
-from ecdh import DiffieHellman, get_key_hex
+from ecdh import DiffieHellman, get_key_hex, get_key_object
 from colorama import Fore, init
 
 # Server configurations (PORT > 1024 doesn't require sudo access)
@@ -131,12 +131,26 @@ try:
             # Exchange public keys with the client
             public_key_hex = get_key_hex(server_ecdh.public_key)
             secure_client_socket.sendall(public_key_hex.encode('utf-8'))
-            public_key_received = secure_client_socket.recv(128)
+            public_key_received = secure_client_socket.recv(1024)
             public_key_received_utf8 = public_key_received.decode('utf-8')
+            public_key_received_bytes = bytes.fromhex(public_key_received_utf8)
+            public_key_received_object = get_key_object(public_key_received_bytes)
 
+            print("==========")
+            print(public_key_hex)
+            print("==========")
             print(public_key_received_utf8)
+            print("==========")
+            print(public_key_received_bytes)
 
-            bitstr_key_enc_ecdh = server_ecdh.encrypt(server_ecdh.public_key, bitstr_key)
+            # received_public_key = serialization.load_der_public_key(
+            #     public_key_received_bytes,
+            #     backend=default_backend()
+            # )
+
+            # Complete the key exchange
+            # bitstr_key_enc_ecdh = server_ecdh.encrypt(public_key_received_bytes, bitstr_key)
+            bitstr_key_enc_ecdh = server_ecdh.encrypt(public_key_received_object, bitstr_key)
             bitstr_key_enc_ecdh_hex = bitstr_key_enc_ecdh.hex()
             secure_client_socket.sendall(bitstr_key_enc_ecdh_hex.encode('utf-8'))
             print("Completed key exchange")
