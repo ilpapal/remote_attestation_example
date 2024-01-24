@@ -8,6 +8,9 @@ import socket
 import ssl
 import subprocess
 from file_checksum import calculate_sha256_checksum
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import dh
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from colorama import Fore, init
 
 
@@ -156,6 +159,8 @@ def main():
             print("Getting bitstream decryption key from the server...")
             bitstr_key_rqst = "bitstr_key"
             secure_client_socket.sendall(bitstr_key_rqst.encode('utf-8'))
+
+            # TODO: Exchange the key using DH
             data_received = secure_client_socket.recv(1024)
             bitstr_decryption_key = data_received.decode('utf-8')
 
