@@ -8,7 +8,7 @@ import socket
 import ssl
 import subprocess
 from file_checksum import calculate_sha256_checksum
-from ecdh import DiffieHellman
+from ecdh import DiffieHellman, get_key_hex
 from colorama import Fore, init
 
 
@@ -160,11 +160,17 @@ def main():
 
             # Exchange the key using DH
             client_ecdh = DiffieHellman()
-            
-            data_received = secure_client_socket.recv(1024)
-            data_received_utf8 = data_received.decode('utf-8')
-            data_received_bytes = bytes.fromhex(data_received_utf8)
-            bitstr_decryption_key = client_ecdh.decrypt(server_ecdh_pub_key, data_received_bytes, client_ecdh.IV)
+
+            # Exchange public keys with the client
+            public_key_received = secure_client_socket.recv(128)
+            public_key_received_utf8 = public_key_received.decode('utf-8')
+            public_key_hex = get_key_hex(client_ecdh.public_key)
+            secure_client_socket.sendall(public_key_hex.encode('utf-8'))
+
+            # data_received = secure_client_socket.recv(1024)
+            # data_received_utf8 = data_received.decode('utf-8')
+            # data_received_bytes = bytes.fromhex(data_received_utf8)
+            # bitstr_decryption_key = client_ecdh.decrypt(server_ecdh_pub_key, data_received_bytes, client_ecdh.IV)
 
             # Decrypt the bitstream and build the xclbin file
             print("#################################################################")
