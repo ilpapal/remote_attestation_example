@@ -22,7 +22,7 @@ att_rqrt_message = "attestation_rqst"
 
 # ---------------------------------------------------
 # Reference values for verification (don't share them with anyone!)
-vrf_checksum = "e1a0da0c1194dbaf729183dbc1a9fc1b14bf8100e4d7eaad2ccfe55425399340"
+vrf_checksum = "e305267c3dfb2cf622af593cd02822b2966fa7a4a853e810b0471c8b9ac60a2a"
 vrf_signature = "f8e2a7b1d6934c0f9dc5450e76a91b6e5e257db4c52e9f062d2464937d3a1c99"
 bitstr_key = "privateer123"
 # ---------------------------------------------------
@@ -121,6 +121,9 @@ try:
         if data_received_utf8 == "bitstr_key":
             print("Sending the bitstream decryption key...")
             secure_client_socket.sendall(bitstr_key.encode('utf-8'))
+
+            # TODO: Exchange the key using DH
+
         else:
             print("[Error] Unable to send the bitstream decryption key")
 
