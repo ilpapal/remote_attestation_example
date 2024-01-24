@@ -9,6 +9,11 @@ from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from secrets import token_bytes
 
+# Added
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import ec
+
 
 class DiffieHellman:
     def __init__(self):
@@ -52,8 +57,7 @@ class DiffieHellman:
 
 
 # Added functions
-def get_key_hex(input_key):
-    public_key_object = input_key.public_key
+def get_key_hex(public_key_object):
     public_key_bytes = public_key_object.public_bytes(
         encoding=serialization.Encoding.DER,
         format=serialization.PublicFormat.SubjectPublicKeyInfo

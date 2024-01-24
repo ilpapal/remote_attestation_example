@@ -8,9 +8,6 @@ import socket
 import ssl
 import Crypto.Random
 from ecdh import DiffieHellman, get_key_hex
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import ec
 from colorama import Fore, init
 
 # Server configurations (PORT > 1024 doesn't require sudo access)
@@ -130,19 +127,15 @@ try:
             print("#################################################################")
             print("Sending the bitstream decryption key using ECDH...")
             server_ecdh = DiffieHellman()
-            
-            # Exchange the public keys 
-            # public_key_object = server_ecdh.public_key
-            # public_key_bytes = public_key_object.public_bytes(
-            #     encoding=serialization.Encoding.DER,
-            #     format=serialization.PublicFormat.SubjectPublicKeyInfo
-            # )
 
-            # public_key_hex = public_key_bytes.hex()
+            # Exchange public keys with the client
+            public_key_hex = get_key_hex(server_ecdh.public_key)
+            secure_client_socket.sendall(public_key_hex.encode('utf-8'))
+            public_key_received = secure_client_socket.recv(128)
+            public_key_received_utf8 = public_key_received.decode('utf-8')
 
-            print("Public Key Bytes:", public_key_bytes)
-            print("Public Key Hex:", public_key_hex)
-            
+            print(public_key_received_utf8)
+
             bitstr_key_enc_ecdh = server_ecdh.encrypt(server_ecdh.public_key, bitstr_key)
             bitstr_key_enc_ecdh_hex = bitstr_key_enc_ecdh.hex()
             secure_client_socket.sendall(bitstr_key_enc_ecdh_hex.encode('utf-8'))
