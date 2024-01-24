@@ -7,6 +7,10 @@
 import socket
 import ssl
 import Crypto.Random
+from ecdh import DiffieHellman, get_key_hex
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import ec
 from colorama import Fore, init
 
 # Server configurations (PORT > 1024 doesn't require sudo access)
@@ -119,10 +123,30 @@ try:
 
         # Send the bitstream decryption key
         if data_received_utf8 == "bitstr_key":
-            print("Sending the bitstream decryption key...")
-            secure_client_socket.sendall(bitstr_key.encode('utf-8'))
+            # print("Sending the bitstream decryption key...")
+            # secure_client_socket.sendall(bitstr_key.encode('utf-8'))
 
             # TODO: Exchange the key using DH
+            print("#################################################################")
+            print("Sending the bitstream decryption key using ECDH...")
+            server_ecdh = DiffieHellman()
+            
+            # Exchange the public keys 
+            # public_key_object = server_ecdh.public_key
+            # public_key_bytes = public_key_object.public_bytes(
+            #     encoding=serialization.Encoding.DER,
+            #     format=serialization.PublicFormat.SubjectPublicKeyInfo
+            # )
+
+            # public_key_hex = public_key_bytes.hex()
+
+            print("Public Key Bytes:", public_key_bytes)
+            print("Public Key Hex:", public_key_hex)
+            
+            bitstr_key_enc_ecdh = server_ecdh.encrypt(server_ecdh.public_key, bitstr_key)
+            bitstr_key_enc_ecdh_hex = bitstr_key_enc_ecdh.hex()
+            secure_client_socket.sendall(bitstr_key_enc_ecdh_hex.encode('utf-8'))
+            print("Completed key exchange")
 
         else:
             print("[Error] Unable to send the bitstream decryption key")
