@@ -1,5 +1,6 @@
 # ECDH Encrypted Key Exchange
 # https://gist.github.com/byt3bl33d3r/84e298c62b310509febf8a4a90f82893
+# Modified by: Ilias Papalamprou
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, padding
@@ -48,3 +49,14 @@ class DiffieHellman:
 
         unpadder = padding.PKCS7(128).unpadder()
         return unpadder.update(decrypted_data) + unpadder.finalize()
+
+
+# Added functions
+def get_key_hex(input_key):
+    public_key_object = input_key.public_key
+    public_key_bytes = public_key_object.public_bytes(
+        encoding=serialization.Encoding.DER,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo
+    )
+    public_key_hex = public_key_bytes.hex()
+    return public_key_hex
