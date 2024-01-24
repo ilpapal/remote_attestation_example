@@ -65,7 +65,7 @@ def get_key_hex(public_key_object):
     public_key_hex = public_key_bytes.hex()
     return public_key_hex
 
-def get_key_object(public_key_hex)
+def get_key_object(public_key_hex):
     received_public_key = serialization.load_der_public_key(
         public_key_received_bytes,
         backend=default_backend()

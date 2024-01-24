@@ -134,6 +134,7 @@ try:
             public_key_received = secure_client_socket.recv(1024)
             public_key_received_utf8 = public_key_received.decode('utf-8')
             public_key_received_bytes = bytes.fromhex(public_key_received_utf8)
+            public_key_received_object = get_key_object(public_key_received_bytes)
 
             print("==========")
             print(public_key_hex)
@@ -149,7 +150,7 @@ try:
 
             # Complete the key exchange
             # bitstr_key_enc_ecdh = server_ecdh.encrypt(public_key_received_bytes, bitstr_key)
-            bitstr_key_enc_ecdh = server_ecdh.encrypt(received_public_key, bitstr_key)
+            bitstr_key_enc_ecdh = server_ecdh.encrypt(public_key_received_object, bitstr_key)
             bitstr_key_enc_ecdh_hex = bitstr_key_enc_ecdh.hex()
             secure_client_socket.sendall(bitstr_key_enc_ecdh_hex.encode('utf-8'))
             print("Completed key exchange")
