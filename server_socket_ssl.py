@@ -6,6 +6,8 @@
 # ---------------------------------------------------
 import socket
 import ssl
+import Crypto.Random
+from colorama import Fore, init
 
 # Server configurations (PORT > 1024 doesn't require sudo access)
 HOST = "147.102.37.120"
@@ -15,17 +17,19 @@ PORT = 6666
 cert_file = "ssl_includes/server.crt"
 key_file = "ssl_includes/server.key"
 
-# Files required for attestation
-xclbin_file = "bitstream/bitstream.bin"
-xclbin_key = "example_key_1"
-xlcbin_cert = "bitstream/xclbin_cert.crt"
-
 # Default Messages
-att_request = "attestation_rqst"
+att_rqrt_message = "attestation_rqst"
 
-# Reference values for verification
-vrf_checksum = "1ce65761516fad64f7acd86a1309aae1bc274bdfa87a26a762eb673d9e811c7a"
+# ---------------------------------------------------
+# Reference values for verification (don't share them with anyone!)
+vrf_checksum = "e1a0da0c1194dbaf729183dbc1a9fc1b14bf8100e4d7eaad2ccfe55425399340"
 vrf_signature = "f8e2a7b1d6934c0f9dc5450e76a91b6e5e257db4c52e9f062d2464937d3a1c99"
+bitstr_key = "privateer123"
+# ---------------------------------------------------
+
+# For reseting terminal text color
+init(autoreset=True)
+
 
 # Create a socket
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -44,10 +48,10 @@ try:
     # Listen for incoming connections
     server_socket.listen()
 
-    print("--------------------------------------------------------")
+    print("#################################################################")
     print("Remote Attestation Server")
     print("Server listening on {} [Port: {}]".format(HOST, PORT))
-    print("--------------------------------------------------------")
+    print("#################################################################")
 
     # Accept a client connection
     client_socket, client_address = server_socket.accept()
@@ -62,42 +66,68 @@ try:
         do_handshake_on_connect=True,
     )
 
-    # Send remote attestation request after successful connection
+    # Send remote attestation request after successful connection along with a nonce
     print("Sending Remote Attestation request...")
+
+    # Generate attestation request with the nonce
+    nonce = Crypto.Random.get_random_bytes(8)
+    nonce_hex = nonce.hex()
+    att_request = att_rqrt_message + nonce_hex
+
     secure_client_socket.sendall(att_request.encode('utf-8'))
 
     # Receive and print the message from the client
-    data_received = secure_client_socket.recv(128)
+    data_received = secure_client_socket.recv(144)
     data_received_utf8 = data_received.decode('utf-8')
 
+    
     # Extract the different variables from the attestation report
     parsed_received = {}
 
-    parsed_received['checksum'] = data_received_utf8[0:64]
-    parsed_received['certificate'] = data_received_utf8[64:128]
+    parsed_received['nonce'] = data_received_utf8[0:16]
+    parsed_received['checksum'] = data_received_utf8[16:80]
+    parsed_received['certificate'] = data_received_utf8[80:144]
+
 
     # Print received attestation report
-    print("Received attestation report")
+    print("Received attestation report:")
+    print("Nonce : {}".format(parsed_received['nonce']))
     print("Checksum : {}".format(parsed_received['checksum']))
     print("Certificate : {}".format(parsed_received['certificate']))
 
+    print("#################################################################")
+    print("Attestation result:")
+
     # Check if we received the correct values
-    if (parsed_received['checksum'] != vrf_checksum) or (parsed_received['certificate'] != vrf_signature):
-        print("A bad guy tries to upload his code :(")
+    if (parsed_received['nonce'] != nonce_hex) or (parsed_received['checksum'] != vrf_checksum) or (parsed_received['certificate'] != vrf_signature):
+        print(f"{Fore.RED}\u2718 Attestation failed")
 
         # Send message that the attestation failed
         att_status = "fail"
         secure_client_socket.sendall(att_status.encode('utf-8'))
 
     else:
-        print("Designer einai filos mou :)")
+        print(f"{Fore.GREEN}\u2713 Designer einai filos mou :)")
 
         # Send message that the attestation completed successfuly
         att_status = "pass"
-        secure_client_socket.sendall(att_status.encode('utf-8'))        
+        secure_client_socket.sendall(att_status.encode('utf-8'))
+
+        # Receive the key request 
+        data_received = secure_client_socket.recv(128)
+        data_received_utf8 = data_received.decode('utf-8')      
+
+        # Send the bitstream decryption key
+        if data_received_utf8 == "bitstr_key":
+            print("Sending the bitstream decryption key...")
+            secure_client_socket.sendall(bitstr_key.encode('utf-8'))
+        else:
+            print("[Error] Unable to send the bitstream decryption key")
+
 
 except KeyboardInterrupt:
     print("Server terminated by user.")
 
-# finally:
-#     server_socket.close()
+finally:
+    print("Exiting...")
+    server_socket.close()
