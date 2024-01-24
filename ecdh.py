@@ -19,7 +19,8 @@ class DiffieHellman:
     def __init__(self):
         self.diffieHellman = ec.generate_private_key(ec.SECP384R1(), default_backend())
         self.public_key = self.diffieHellman.public_key()
-        self.IV = token_bytes(16)
+        # self.IV = token_bytes(16)
+        self.IV = b'\x8f\xf3\xd2\xc0\xac\x9b\xe7\x18\x94\xcd\xf1\x82\xd9\xb5\x07'
 
     def encrypt(self, public_key, secret):
         shared_key = self.diffieHellman.exchange(ec.ECDH(), public_key)

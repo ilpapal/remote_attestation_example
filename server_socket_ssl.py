@@ -153,6 +153,8 @@ try:
             bitstr_key_enc_ecdh = server_ecdh.encrypt(public_key_received_object, bitstr_key)
             bitstr_key_enc_ecdh_hex = bitstr_key_enc_ecdh.hex()
             secure_client_socket.sendall(bitstr_key_enc_ecdh_hex.encode('utf-8'))
+            print("==========")
+            print(bitstr_key_enc_ecdh_hex)
             print("Completed key exchange")
 
         else:
