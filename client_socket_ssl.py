@@ -158,7 +158,7 @@ def main():
             bitstr_key_rqst = "bitstr_key"
             secure_client_socket.sendall(bitstr_key_rqst.encode('utf-8'))
 
-            # Exchange the key using DH
+            # Exchange the key using ECDH
             client_ecdh = DiffieHellman()
 
             # Exchange public keys with the client
@@ -166,6 +166,7 @@ def main():
             public_key_received_utf8 = public_key_received.decode('utf-8')
             public_key_hex = get_key_hex(client_ecdh.public_key)
             secure_client_socket.sendall(public_key_hex.encode('utf-8'))
+
 
             # data_received = secure_client_socket.recv(1024)
             # data_received_utf8 = data_received.decode('utf-8')
