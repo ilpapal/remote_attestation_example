@@ -20,9 +20,7 @@ class DiffieHellman:
         self.diffieHellman = ec.generate_private_key(ec.SECP384R1(), default_backend())
         self.public_key = self.diffieHellman.public_key()
         # self.IV = token_bytes(16)
-        # print("$$$$$$$$$$")
-        # print(self.IV)
-        # print("$$$$$$$$$$")
+        # TODO : Better is to have random generation each time
         self.IV = b'T\x19F\xbdy2\x0f\x918\x80\xa5\x1a\xe4\xf39\x06'
 
     def encrypt(self, public_key, secret):

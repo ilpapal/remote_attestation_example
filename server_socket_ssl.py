@@ -23,7 +23,7 @@ att_rqrt_message = "attestation_rqst"
 
 # ---------------------------------------------------
 # Reference values for verification (don't share them with anyone!)
-vrf_checksum = "e305267c3dfb2cf622af593cd02822b2966fa7a4a853e810b0471c8b9ac60a2a"
+vrf_checksum = "4e455a6899d8b132cfd03819b3972f1957587641188ec82d91ba652983c36394"
 vrf_signature = "f8e2a7b1d6934c0f9dc5450e76a91b6e5e257db4c52e9f062d2464937d3a1c99"
 bitstr_key = "privateer123"
 # ---------------------------------------------------
@@ -108,7 +108,7 @@ try:
         secure_client_socket.sendall(att_status.encode('utf-8'))
 
     else:
-        print(f"{Fore.GREEN}\u2713 Designer einai filos mou :)")
+        print(f"{Fore.GREEN}\u2713 Successful Attestation")
 
         # Send message that the attestation completed successfuly
         att_status = "pass"
@@ -120,10 +120,7 @@ try:
 
         # Send the bitstream decryption key
         if data_received_utf8 == "bitstr_key":
-            # print("Sending the bitstream decryption key...")
-            # secure_client_socket.sendall(bitstr_key.encode('utf-8'))
-
-            # TODO: Exchange the key using DH
+            # Exchange the key using DH
             print("#################################################################")
             print("Sending the bitstream decryption key using ECDH...")
             server_ecdh = DiffieHellman()
@@ -136,26 +133,11 @@ try:
             public_key_received_bytes = bytes.fromhex(public_key_received_utf8)
             public_key_received_object = get_key_object(public_key_received_bytes)
 
-            print("==========")
-            print(public_key_hex)
-            print("==========")
-            print(public_key_received_utf8)
-            print("==========")
-            print(public_key_received_bytes)
-
-            # received_public_key = serialization.load_der_public_key(
-            #     public_key_received_bytes,
-            #     backend=default_backend()
-            # )
-
             # Complete the key exchange
-            # bitstr_key_enc_ecdh = server_ecdh.encrypt(public_key_received_bytes, bitstr_key)
             bitstr_key_enc_ecdh = server_ecdh.encrypt(public_key_received_object, bitstr_key)
             bitstr_key_enc_ecdh_hex = bitstr_key_enc_ecdh.hex()
             secure_client_socket.sendall(bitstr_key_enc_ecdh_hex.encode('utf-8'))
-            print("==========")
-            print(bitstr_key_enc_ecdh_hex)
-            print("Completed key exchange")
+            print("Key Derivation Completed")
 
         else:
             print("[Error] Unable to send the bitstream decryption key")
@@ -166,4 +148,5 @@ except KeyboardInterrupt:
 
 finally:
     print("Exiting...")
+    print("#################################################################")
     server_socket.close()
