@@ -12,6 +12,7 @@ from ecdh import DiffieHellman, get_key_hex, get_key_object
 from colorama import Fore, init
 
 # Define if we want executed commands to show output
+# DEBUG = True
 DEBUG = False
 
 # Server configurations
@@ -26,11 +27,11 @@ key_file = 'ssl_includes/client.key'
 att_request = "attestation_rqst"
 
 # Acceleartion files
-exec_file = "app_files/hello_world"
-xclbin_file = "app_files/vadd_enc_signed.xclbin"
-# xclbin_file = "app_files/vadd.xclbin"
-bitstr_raw_file = "app_files/bitstream_raw_enc.bit"
-xclbin_output_file = "app_files/output.xclbin"
+exec_file = "app_files/hello_world_kernel/hello_world"
+xclbin_file = "app_files/hello_world_kernel/vadd_enc_signed.xclbin"
+# xclbin_file = "app_files/hello_world_kernel/vadd.xclbin"
+bitstr_raw_file = "app_files/hello_world_kernel/bitstream_raw_enc.bit"
+xclbin_output_file = "app_files/hello_world_kernel/output.xclbin"
 
 
 # For reseting terminal text color
@@ -52,6 +53,7 @@ def remote_attestation(nonce, input_file):
 
     # Calculate bitstream checksum
     file_checksum = calculate_sha256_checksum(bitstr_raw_file)
+    print("Bitstream Checksum:", file_checksum)
 
     # Extract file signature
     get_signature_command = ["xclbinutil", "--input", xclbin_file, "--get-signature", "--quiet"]
@@ -63,7 +65,7 @@ def remote_attestation(nonce, input_file):
     # Extract the signature from the command output
     if output_str != "":
         file_signature = extract_first_element(output_str)
-        print("File Signature : {}".format(file_signature))
+        print("Bitstream Signature:", file_signature)
     else:
         file_signature = ""
         print("[Error] Unable to get file signature")
@@ -109,10 +111,7 @@ def main():
     # Print an error if the connection was unsuccessful
     except Exception as e:
         print("[Client] Connection error: {}".format(e))
-
-    print("#################################################################")
-    print("Edge Accelerator connected to {} [Port: {}]".format(HOST, PORT))
-    print("#################################################################")
+        return
 
     # Wrap the socket with SSL/TLS
     ssl_context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
@@ -127,6 +126,10 @@ def main():
     ssl_context.load_cert_chain(certfile=cert_file, keyfile=key_file)
     secure_client_socket = ssl_context.wrap_socket(client_socket, server_hostname=HOST)
 
+    print("#################################################################")
+    print("Edge Accelerator connected to {} [Port: {}]".format(HOST, PORT))
+    print("#################################################################")
+
     # Receive and print the response from the server
     data_received = secure_client_socket.recv(1024)
     data_received_utf8 = data_received.decode('utf-8')
@@ -134,6 +137,7 @@ def main():
     # Perform remote attestation procedure if the correct request is received [att_rsqt + nonce]
     if data_received_utf8[0:16] == att_request:
         print("Initalizing Remote Attestation Protocol...")
+        print("Input file:", xclbin_file)
 
         # Get the nonce value
         nonce = data_received_utf8[16:32]
@@ -157,7 +161,10 @@ def main():
 
         if data_received_utf8 == "fail":
             print(f"{Fore.RED}\u2718 Failed Attestation")
+            print("Exiting...")
+            print("#################################################################")
             secure_client_socket.close()
+
 
         elif data_received_utf8 == "pass":
             print(f"{Fore.GREEN}\u2713 Successful Attestation") 
