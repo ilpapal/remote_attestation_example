@@ -23,7 +23,7 @@ att_rqrt_message = "attestation_rqst"
 
 # ---------------------------------------------------
 # Reference values for verification (don't share them with anyone!)
-vrf_checksum = "4e455a6899d8b132cfd03819b3972f1957587641188ec82d91ba652983c36394"
+vrf_checksum = "2afe2f2a9bd500bba2e72e4a10d9cb4a49310dc06517a244cf66b598d74c49e6"
 vrf_signature = "f8e2a7b1d6934c0f9dc5450e76a91b6e5e257db4c52e9f062d2464937d3a1c99"
 bitstr_key = "privateer123"
 # ---------------------------------------------------
@@ -73,11 +73,12 @@ try:
     # Generate attestation request with the nonce
     nonce = Crypto.Random.get_random_bytes(8)
     nonce_hex = nonce.hex()
+    print("Nonce:", nonce_hex)
     att_request = att_rqrt_message + nonce_hex
 
     secure_client_socket.sendall(att_request.encode('utf-8'))
 
-    # Receive and print the message from the client
+    # Receive from the client
     data_received = secure_client_socket.recv(144)
     data_received_utf8 = data_received.decode('utf-8')
 
@@ -91,11 +92,16 @@ try:
 
 
     # Print received attestation report
-    print("Received attestation report:")
+    print("#################################################################")
+    print("Received Attestation Report")
     print("Nonce : {}".format(parsed_received['nonce']))
     print("Checksum : {}".format(parsed_received['checksum']))
     print("Certificate : {}".format(parsed_received['certificate']))
 
+    print("#################################################################")
+    print("Reference Values")
+    print("Checksum :", vrf_checksum)
+    print("Certificate :", vrf_signature)
     print("#################################################################")
     print("Attestation result:")
 
