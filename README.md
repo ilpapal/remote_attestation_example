@@ -1,23 +1,5 @@
 ## Remote Attestation Example
 
-Remote Attestation Example written in Python. Establishes connection between a Server and Client using SSL sockets.
-
-Useful for killing the Python process:
-
-```
-kill -9 $(ps -A | grep python | awk '{print $1}')
-```
-
-### ```xclbinutil``` commands
-
-Extract Bitstream from ```.xclbinutil``` file
-
-```
-xclbinutil --dump-section BITSTREAM:RAW:bitstream.bit --input myfile.xclbin
-```
-
-Add signature to ```.xclbinutil``` file
-
-```
-xclbinutil -i lstm.xclbin --add-signature test --output lstm_signed.xclbin
-```
+FPGA Remote Attestation example for PCI Express - CPU Setup (ie. x86 CPU hosting an ALVEO Card). 
+The Remote remote attestation has been done by utilizing the ```xclbinutil``` Xilinx/AMD provides for Accelerator Cards.
+Futhermore, an external verification server is needed t operform the remote attestation request and verify the received values.
