@@ -203,12 +203,13 @@ def main():
 
             # Decrypt the bitstream and build the xclbin file
             print("#################################################################")
-            bitstream_decryption(bitstr_raw_file, bitstr_decryption_key)
+            # bitstream_decryption(bitstr_raw_file, bitstr_decryption_key)
+            bitstream_decryption(xclbin_file, bitstr_decryption_key)
             
             # Load the .xclbin application to the FPGA
             print("#################################################################")
             # print("Loading the application to the accelerator...")            
-            # subprocess.run(["xclbinutil", "--help"])
+            subprocess.run(["xbutil2", "--help"])
 
     else:
         print("[Error] - Received: {}".format(data_received_utf8))
