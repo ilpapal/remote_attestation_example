@@ -88,7 +88,7 @@ def remote_attestation(nonce, input_file):
 def bitstream_decryption(input_file, bitstr_key):
     # Decrypt the bitstream file using OpenSSL and AES algorithm, with the received key after a successful attestation
     print("Decrypting bitstream...")
-    bitstr_dec_raw = "app_files/bitstream_raw_dec.bit"
+    bitstr_dec_raw = "app_files/app_dec.xclbin"
     try:
         cmd_log = subprocess.run(["openssl", "enc", "-d", "-aes-256-cbc", "-in", input_file, "-out", bitstr_dec_raw, "-k", bitstr_key, "-pbkdf2"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if DEBUG : print(cmd_log.stdout.decode('utf-8'))
@@ -97,15 +97,15 @@ def bitstream_decryption(input_file, bitstr_key):
         print(e.stderr.decode('utf-8'))
 
     # Load the decrypted bitstream back to the xclbin file 
-    print("Building the .xclbin file...")
-    bitstr_section = "BITSTREAM:RAW:" + bitstr_dec_raw
-    cmd_log = subprocess.run(["xclbinutil", "--force", "--input", xclbin_file, "--replace-section", bitstr_section, "--output", xclbin_output_file], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    if DEBUG : print(cmd_log.stdout.decode('utf-8'))
+    # print("Building the .xclbin file...")
+    # bitstr_section = "BITSTREAM:RAW:" + bitstr_dec_raw
+    # cmd_log = subprocess.run(["xclbinutil", "--force", "--input", xclbin_file, "--replace-section", bitstr_section, "--output", xclbin_output_file], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    # if DEBUG : print(cmd_log.stdout.decode('utf-8'))
 
     # Remove the raw bitstream files
-    print("Cleaning files...")
-    subprocess.run(["rm", bitstr_dec_raw])
-    subprocess.run(["rm", bitstr_raw_file])
+    # print("Cleaning files...")
+    # subprocess.run(["rm", bitstr_dec_raw])
+    # subprocess.run(["rm", bitstr_raw_file])
 
 # Main program function
 def main():
@@ -208,7 +208,7 @@ def main():
             
             # Load the .xclbin application to the FPGA
             print("#################################################################")
-            # print("Loading the application to the accelerator...")            
+            print("Loading the application to the accelerator...")            
             subprocess.run(["xbutil2", "--help"])
 
     else:
