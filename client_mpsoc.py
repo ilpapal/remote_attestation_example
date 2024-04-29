@@ -16,8 +16,8 @@ from ecdh import DiffieHellman, get_key_hex, get_key_object
 from colorama import Fore, init
 
 # Define if we want executed commands to show output
-# DEBUG = True
-DEBUG = False
+DEBUG = True
+# DEBUG = False
 
 # Server configurations
 HOST = '147.102.37.120'
