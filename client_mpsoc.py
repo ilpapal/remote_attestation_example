@@ -53,7 +53,7 @@ def remote_attestation(nonce, input_file):
     # Extract bitstream from the xclbin application into a seperate file
     # bitstr_section = "BITSTREAM:RAW:" + bitstr_raw_file
     # cmd_log = subprocess.run(["xclbinutil", "--force", "--dump-section", bitstr_section, "--input", input_file], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    if DEBUG : print(cmd_log.stdout.decode('utf-8'))
+    # if DEBUG : print(cmd_log.stdout.decode('utf-8'))
 
     # Calculate bitstream checksum
     # file_checksum = calculate_sha256_checksum(bitstr_raw_file)
