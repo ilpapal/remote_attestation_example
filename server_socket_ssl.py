@@ -23,7 +23,7 @@ att_rqrt_message = "attestation_rqst"
 
 # ---------------------------------------------------
 # Reference values for verification (don't share them with anyone!)
-vrf_checksum = "597089ee8b7f65bf6eb17c6c16c55473dcdea77fd85cfddb2183d67ae841012f"
+vrf_checksum = "b1228194d06619fee52dfdaefc65e128d74e749083cc8beb6d36ed316b52df5d"
 vrf_signature = "f8e2a7b1d6934c0f9dc5450e76a91b6e5e257db4c52e9f062d2464937d3a1c99"
 bitstr_key = "privateer123"
 # ---------------------------------------------------
