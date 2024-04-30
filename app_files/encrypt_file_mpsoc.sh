@@ -15,7 +15,7 @@ XCLBIN_ENC_SIGNED="${INPUT_PATH}/${INPUT_FILENAME}_enc_signed.xclbin"
 
 # Encrypt the bitstream using a user defined key
 echo "Encrypting the bitstream using AES standard..."
-openssl enc -aes-256-cbc -salt -in $INPUT_PATH -out $INPUT_PATH/enc.xclbin -k $BITSTR_KEY -pbkdf2
+openssl enc -aes-256-cbc -salt -in $INPUT_XCLBIN -out $INPUT_PATH/enc.xclbin -k $BITSTR_KEY -pbkdf2
 
 # Add user signature to the .xclbin application
 # echo "Adding user signature to" $XCLBIN_ENC
