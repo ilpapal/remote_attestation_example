@@ -30,12 +30,8 @@ key_file = 'ssl_includes/client.key'
 # Default Messages
 att_request = "attestation_rqst"
 
-# Acceleartion files
+# Hardware Accelerator files
 xclbin_file = "app_files/hello_world_kernel/vadd.xclbin"
-# exec_file = "app_files/hello_world_kernel/hello_world"
-# xclbin_file = "app_files/hello_world_kernel/vadd_enc_signed.xclbin"
-# bitstr_raw_file = "app_files/hello_world_kernel/bitstream_raw_enc.bit"
-# xclbin_output_file = "app_files/hello_world_kernel/output.xclbin"
 
 
 # For reseting terminal text color
@@ -50,13 +46,7 @@ def extract_first_element(line):
 
 # Calculate values required for remote attestation
 def remote_attestation(nonce, input_file):
-    # Extract bitstream from the xclbin application into a seperate file
-    # bitstr_section = "BITSTREAM:RAW:" + bitstr_raw_file
-    # cmd_log = subprocess.run(["xclbinutil", "--force", "--dump-section", bitstr_section, "--input", input_file], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    # if DEBUG : print(cmd_log.stdout.decode('utf-8'))
-
     # Calculate bitstream checksum
-    # file_checksum = calculate_sha256_checksum(bitstr_raw_file)
     file_checksum = calculate_sha256_checksum(xclbin_file)
     print("Bitstream Checksum:", file_checksum)
 
@@ -75,6 +65,7 @@ def remote_attestation(nonce, input_file):
     #     file_signature = ""
     #     print("[Error] Unable to get file signature")
 
+    # Hardcoded for testing 
     file_signature = "f8e2a7b1d6934c0f9dc5450e76a91b6e5e257db4c52e9f062d2464937d3a1c99"
     print("Bitstream Signature:", file_signature)
 
@@ -90,12 +81,21 @@ def bitstream_decryption(input_file, bitstr_key):
     print("Decrypting bitstream...")
     bitstr_dec_raw = "app_files/app_dec.xclbin"
     try:
-        cmd_log = subprocess.run(["openssl", "enc", "-d", "-aes-256-cbc", "-in", input_file, "-out", bitstr_dec_raw, "-k", bitstr_key, "-pbkdf2"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        cmd_log = subprocess.run(["openssl", 
+                                  "enc", 
+                                  "-d", 
+                                  "-aes-256-cbc", 
+                                  "-in", input_file, 
+                                  "-out", bitstr_dec_raw, 
+                                  "-k", bitstr_key, 
+                                  "-pbkdf2"], 
+                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if DEBUG : print(cmd_log.stdout.decode('utf-8'))
     except subprocess.CalledProcessError as e:
         print("OPENSSL Decryption Error")
         print(e.stderr.decode('utf-8'))
 
+    print("Bitstream decryption done.")
     # Load the decrypted bitstream back to the xclbin file 
     # print("Building the .xclbin file...")
     # bitstr_section = "BITSTREAM:RAW:" + bitstr_dec_raw
