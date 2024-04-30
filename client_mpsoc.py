@@ -31,7 +31,8 @@ key_file = 'ssl_includes/client.key'
 att_request = "attestation_rqst"
 
 # Hardware Accelerator files
-xclbin_file = "app_files/hello_world_kernel/vadd.xclbin"
+# xclbin_file = "app_files/hello_world_kernel/vadd.xclbin"
+xclbin_file = "app_files/hello_world_kernel/enc.xclbin"
 
 
 # For reseting terminal text color
