@@ -1,0 +1,26 @@
+{
+  "attestationReports": [
+    {
+      "containerID": "Microservice 1 μProbe",
+      "attestationReport": [
+        {
+          "claim": "container-configuration-integrity",
+          "timestamp": "2024-05-16T15:30:45Z",
+          "appraisal": null
+        },
+        {
+          "claim": "runtime-integrity",
+          "timestamp": "2024-05-16T15:35:22Z",
+          "appraisal": null
+        }
+      ]
+    }
+  ],
+  "securityProbeEvidence": {
+    "timestamp": "2024-05-16T15:30:45Z",
+    "nonce": "d78080092edf3633e6933f67ddfe6744",
+    "signatureAlgorithmType": "ECDSA-SHA256",
+    "signature": "30440220655e8f8b6f96a6...",
+    "keyRef": "ecdsa_public_key_71"
+  }
+}
